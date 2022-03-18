@@ -1,4 +1,5 @@
 * Optional
+ result를 포함하려면 header args에 :exports both를 잊으면 안됨
 ** initial example
 :PROPERTIES:
 :header-args:swift: :session swift-01
@@ -60,7 +61,7 @@ residence를 어사인 했기 때문에 이제는 접근 가능
 
 ** more elaborated example
 :PROPERTIES:
-:header-args:swift: :session swift-02
+:header-args:swift: :session swift-02 :exports both
 :END:
 Room Address Residence class declaration
 #+begin_src swift
@@ -111,7 +112,7 @@ Room Address Residence class declaration
 #+RESULTS:
 : 6. 7. 8. 9. 10. 11. 12. 13. 14. 15. 16. 17. 18. 19> 20> 21. 22. 23. 24. 25. 26. 27. 28. 29. 30. 31. 32. 33. 34. 35. 36. 37. 38> 39> 40. 41. 42> 43> $R0: String = "ob-swift-eoe"
 
-#+begin_src swift
+#+begin_src swift :exports both
 let john = Person()
 let someAddress = Address()
 someAddress.buildingNumber = "29"
@@ -217,3 +218,17 @@ if let firstRoomName = john.residence?[0].name {
 :   address = nil
 : }
 : The first room name is Living Room.
+
+** 옵셔널 타입에 서브 스크립트 접근 (Accessing Subscripts of Optional Type)
+#+begin_src swift :exports both
+  var testScores = ["Dave": [86, 82, 84], "Bev": [79, 94, 81]]
+  testScores["Dave"]?[0] = 91
+  testScores["Bev"]?[0] += 1
+  testScores["Brian"]?[0] = 72
+  print(testScores)
+  // the "Dave" array is now [91, 82, 84] and the "Bev" array is now [80, 94, 81]
+#+end_src
+
+#+RESULTS:
+: ["Dave": [91, 82, 84], "Bev": [80, 94, 81]]
+
