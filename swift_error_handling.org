@@ -1,0 +1,247 @@
+* Error Handling
+:PROPERTIES:
+:header-args:swift: :session swift-03
+:END:
+#+begin_src swift
+enum VendingMachineError: Error {
+    case invalidSelection
+    case insufficientFunds(coinsNeeded: Int)
+    case outOfStock
+}
+#+end_src
+
+#+RESULTS:
+
+#+begin_src swift
+throw VendingMachineError.insufficientFunds(coinsNeeded: 5)
+#+end_src
+
+#+RESULTS:
+: $E0: VendingMachineError = insufficientFunds {
+:   insufficientFunds = {
+:     coinsNeeded = 5
+:   }
+: }
+
+#+begin_src swift
+func canThrowErrors() throws -> String
+
+func cannotThrowErrors() -> String
+
+#+end_src
+
+
+#+begin_src swift
+struct Item {
+    var price: Int
+    var count: Int
+}
+
+class VendingMachine {
+    var inventory = [
+        "Candy Bar": Item(price: 12, count: 7),
+        "Chips": Item(price: 10, count: 4),
+        "Pretzels": Item(price: 7, count: 11)
+    ]
+    var coinsDeposited = 0
+
+    func vend(itemNamed name: String) throws {
+        guard let item = inventory[name] else {
+            throw VendingMachineError.invalidSelection
+        }
+
+        guard item.count > 0 else {
+            throw VendingMachineError.outOfStock
+        }
+
+        guard item.price <= coinsDeposited else {
+            throw VendingMachineError.insufficientFunds(coinsNeeded: item.price - coinsDeposited)
+        }
+
+        coinsDeposited -= item.price
+
+        var newItem = item
+        newItem.count -= 1
+        inventory[name] = newItem
+
+        print("Dispensing \(name)")
+    }
+}
+
+let favoriteSnacks = [
+    "Alice": "Chips",
+    "Bob": "Licorice",
+    "Eve": "Pretzels",
+]
+func buyFavoriteSnack(person: String, vendingMachine: VendingMachine) throws {
+    let snackName = favoriteSnacks[person] ?? "Candy Bar"
+    try vendingMachine.vend(itemNamed: snackName)
+}
+#+end_src
+
+#+RESULTS:
+#+begin_example
+15. 16. 17. 18. 19. 20. 21. 22. 23. 24. 25. 26. 27. 28. 29. 30. 31. 32. 33. 34. 35. 36. 37. 38. 39. 40. 41. 42. 43. 44> 45> 46. 47. 48. 49. favoriteSnacks: [String : String] = 3 key/value pairs {
+  [0] = {
+    key = "Eve"
+    value = "Pretzels"
+  }
+  [1] = {
+    key = "Alice"
+    value = "Chips"
+  }
+  [2] = {
+    key = "Bob"
+    value = "Licorice"
+  }
+}
+#+end_example
+
+#+begin_src swift
+struct PurchasedSnack {
+    let name: String
+    init(name: String, vendingMachine: VendingMachine) throws {
+        try vendingMachine.vend(itemNamed: name)
+        self.name = name
+    }
+}
+#+end_src
+
+#+RESULTS:
+
+#+begin_src swift
+var vendingMachine = VendingMachine()
+vendingMachine.coinsDeposited = 8
+do {
+    try buyFavoriteSnack(person: "Alice", vendingMachine: vendingMachine)
+    print("Success! Yum.")
+} catch VendingMachineError.invalidSelection {
+    print("Invalid Selection.")
+} catch VendingMachineError.outOfStock {
+    print("Out of Stock.")
+} catch VendingMachineError.insufficientFunds(let coinsNeeded) {
+    print("Insufficient funds. Please insert an additional \(coinsNeeded) coins.")
+} catch {
+    print("Unexpected error: \(error).")
+}
+// Prints "Insufficient funds. Please insert an additional 2 coins."
+#+end_src
+
+#+RESULTS:
+#+begin_example
+vendingMachine: VendingMachine = {
+  inventory = 3 key/value pairs {
+    [0] = {
+      key = "Candy Bar"
+      value = {
+        price = 12
+        count = 7
+      }
+    }
+    [1] = {
+      key = "Chips"
+      value = {
+        price = 10
+        count = 4
+      }
+    }
+    [2] = {
+      key = "Pretzels"
+      value = {
+        price = 7
+        count = 11
+      }
+    }
+  }
+  coinsDeposited = 0
+}
+Insufficient funds. Please insert an additional 2 coins.
+#+end_example
+
+#+begin_src swift
+func nourish(with item: String) throws {
+    do {
+        try vendingMachine.vend(itemNamed: item)
+    } catch is VendingMachineError {
+        print("Couldn't buy that from the vending machine.")
+    }
+}
+
+do {
+    try nourish(with: "Beet-Flavored Chips")
+} catch {
+    print("Unexpected non-vending-machine-related error: \(error)")
+}
+// Prints "Couldn't buy that from the vending machine."
+#+end_src
+
+#+RESULTS:
+: 88. 89. 90. 91. Couldn't buy that from the vending machine.
+
+연관된 에러를 포착하기 위한 다른 방법은 콤마로 구분하여 catch 다음에 목록 형식으로 작성하는 것입니다. 예를 들어:
+#+begin_src swift
+func eat(item: String) throws {
+    do {
+        try vendingMachine.vend(itemNamed: item)
+    } catch VendingMachineError.invalidSelection, VendingMachineError.insufficientFunds, VendingMachineError.outOfStock {
+        print("Invalid selection, out of stock, or not enough money.")
+    }
+}
+#+end_src
+
+#+RESULTS:
+
+** error를 optional로 표현
+#+begin_src swift
+enum VendingMachineError: Error {
+    case invalidSelection
+    case insufficientFunds(coinsNeeded: Int)
+    case outOfStock
+}
+
+  func someThrowingFunction() throws -> Int {
+      //
+      print("hello")
+      throw VendingMachineError.invalidSelection
+return 1
+  
+  }
+  
+  let x = try? someThrowingFunction()
+  print(x)
+
+  var y: Int?
+  do {
+      y = try someThrowingFunction()
+  } catch {
+      y = nil
+  }
+print(y)
+#+end_src
+
+#+RESULTS:
+: 88. 89. 90. 91. 92. 93. 94> 95> hello
+: x: Int? = nil
+: nil
+: y: Int? = nil
+: hello
+: nil
+
+*** try를 전부 nil로 관리 할 수 있게 해주는 코드
+#+begin_src swift
+func fetchData() -> Data? {
+    if let data = try? fetchDataFromDisk() { return data }
+    if let data = try? fetchDataFromServer() { return data }
+    return nil
+}
+#+end_src
+
+** Disabling Error Propagation
+가끔 던지는 함수 또는 메서드가 실제로 런타임 에러를 발생하지 않는다는 사실을 알고 있습니다. 이러한 경우 표현식 전에 에러 전파를 비활성화 하기 위해 try! 를 작성할 수 있고 에러를 발생하지 않는다고 호출을 래핑할 수 있습니다. 에러가 발생한다면 런타임 에러를 얻습니다.
+예를 들어 다음의 코드는 주어진 경로의 이미지를 로드하거나 이미지를 로드할 수 없을 때는 에러를 발생하는 loadImage(atPath:) 함수를 사용합니다. 이러한 경우 이미지는 이미지는 애플리케이션과 함께 제공되고 런타임에 에러가 발생하지 않으므로 에러 전파를 비활성화 하는 것이 적절합니다.
+강제 unwrapping과 비슷하게 실패하면 runtime error를 얻는다
+#+begin_src swift
+let photo = try! loadImage(atPath: "./Resources/John Appleseed.jpg")
+#+end_src
+
+
